@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>ualg on Lisandra Simões Pires</title>
+    <link>https://lisandrasp.github.io/tags/ualg/</link>
+    <description>Recent content in ualg on Lisandra Simões Pires</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-US</language>
+    <lastBuildDate>Wed, 17 May 2023 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="https://lisandrasp.github.io/tags/ualg/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    
+    <item>
+      <title>Connecting to UAlg&#39;s eduroam using iwd</title>
+      <link>https://lisandrasp.github.io/connecting-to-ualgs-eduroam-using-iwd/</link>
+      <pubDate>Wed, 17 May 2023 00:00:00 +0000</pubDate>
+      
+      <guid>https://lisandrasp.github.io/connecting-to-ualgs-eduroam-using-iwd/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://www.ualg.pt/en&#34;&gt;UAlg&lt;/a&gt;&amp;rsquo;s website only has a guide to connect to eduroam in Linux using the NetworkManager, thankfully the &lt;a href=&#34;https://wiki.archlinux.org/&#34;&gt;ArchWiki&lt;/a&gt; is extremely helpful and had all the information I needed. Thus, I wrote this guide to refer back to when I inevitably need to do this again.&lt;/p&gt;
+&lt;h3 id=&#34;wireless-device&#34;&gt;Wireless device&lt;/h3&gt;
+&lt;p&gt;Find the name of your wireless device, it&amp;rsquo;s in the first column under &lt;em&gt;Name&lt;/em&gt;.&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;$ iwctl
+[iwd]# device list
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Mine is called &lt;code&gt;wlan0&lt;/code&gt; because I only have one device, yours should be the same unless you have more than one, in that case pick the one you want to use. Also, under &lt;em&gt;Powered&lt;/em&gt; it should say &lt;em&gt;on&lt;/em&gt;, if it&amp;rsquo;s off you need to turn it on.&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;[iwd]# device wlan0 set-property Powered on
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;&lt;strong&gt;Don&amp;rsquo;t&lt;/strong&gt; forget to replace &lt;code&gt;wlan0&lt;/code&gt; for the name of your wireless device if needed. If it doesn&amp;rsquo;t work you need to check if it&amp;rsquo;s soft blocked or hard blocked, which is something I won&amp;rsquo;t get into but &lt;a href=&#34;https://wiki.archlinux.org/title/Network_configuration/Wireless#Rfkill_caveat&#34;&gt;here&amp;rsquo;s&lt;/a&gt; a useful ArchWiki page.&lt;/p&gt;
+&lt;h3 id=&#34;certificate&#34;&gt;Certificate&lt;/h3&gt;
+&lt;p&gt;Connect to eduroam-install.&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;[iwd]# station wlan0 connect eduroam-install
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Check if you&amp;rsquo;re connected. This command gives a lot of information but we&amp;rsquo;re only interested in &lt;em&gt;State&lt;/em&gt;.&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;[iwd]# station wlan0 show
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Check the &lt;em&gt;Value&lt;/em&gt; column of the table, &lt;em&gt;State&lt;/em&gt; should be &lt;em&gt;connected&lt;/em&gt;.&lt;/p&gt;
+&lt;p&gt;Open a browser and go to &lt;a href=&#34;http://wireless.ualg.pt&#34;&gt;http://wireless.ualg.pt&lt;/a&gt;, there&amp;rsquo;s a button in the top-right corner to see the page in english. Click &lt;em&gt;Manual Configuration&lt;/em&gt; then &lt;em&gt;PEM&lt;/em&gt; to download the certificate.&lt;/p&gt;
+&lt;p&gt;Quit &lt;code&gt;iwctl&lt;/code&gt; and move the certificate from the Downloads folder, or whichever one you saved it in, to &lt;code&gt;/usr/share/ca-certificates/&lt;/code&gt;.&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;[iwd]# quit
+$ cd ~/Downloads/
+$ mv ualg-eduroam-ca-2014.pem /usr/share/ca-certificates/
+&lt;/code&gt;&lt;/pre&gt;&lt;blockquote&gt;
+&lt;p&gt;This is &lt;strong&gt;important&lt;/strong&gt;, don&amp;rsquo;t keep it inside the home directory, iwd won&amp;rsquo;t be able to access the file.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Go to the iwd folder as superuser and create a file called &lt;code&gt;eduroam.8021x&lt;/code&gt;.&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;$ sudo -s
+$ cd /var/lib/iwd/
+$ touch eduroam.8021x
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Open the file with a text editor and paste de text below, then replace &lt;em&gt;user&lt;/em&gt; and &lt;em&gt;password&lt;/em&gt; with &lt;strong&gt;your&lt;/strong&gt; login information. It&amp;rsquo;s the same used to access UAlg&amp;rsquo;s &lt;a href=&#34;https://ualgnet.ualg.pt/login&#34;&gt;Intranet&lt;/a&gt;.&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;[Security]
+EAP-Method=PEAP
+EAP-Identity=user@ualg.pt
+EAP-PEAP-CACert=/usr/share/ca-certificates/ualg-eduroam-ca-2014.pem
+EAP-PEAP-Phase2-Method=MSCHAPV2
+EAP-PEAP-Phase2-Identity=user@ualg.pt
+EAP-PEAP-Phase2-Password=password
+
+[Settings]
+AutoConnect=true
+&lt;/code&gt;&lt;/pre&gt;&lt;h4 id=&#34;password-encryption&#34;&gt;Password encryption&lt;/h4&gt;
+&lt;p&gt;This step is optional but &lt;strong&gt;recommended&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;Type or paste the text below in the terminal and hit &lt;code&gt;Enter&lt;/code&gt;. The cursor will move to a new line. Write your password and &lt;strong&gt;don&amp;rsquo;t&lt;/strong&gt; push &lt;code&gt;Enter&lt;/code&gt; this time.&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;$ iconv -t utf16le | openssl md4 -provider legacy
+&lt;/code&gt;&lt;/pre&gt;&lt;blockquote&gt;
+&lt;p&gt;To paste in the terminal add a &lt;code&gt;Shift&lt;/code&gt; before &lt;code&gt;Ctrl+v&lt;/code&gt;.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Now press &lt;code&gt;Ctrl+d&lt;/code&gt; and copy the resulting hash.&lt;/p&gt;
+&lt;p&gt;Edit the &lt;code&gt;eduroam.8021.x&lt;/code&gt; file replacing the line &lt;code&gt;EAP-PEAP-Phase2-Password=password&lt;/code&gt; with &lt;code&gt;EAP-PEAP-Phase2-Password-Hash=hash&lt;/code&gt; and save it.&lt;/p&gt;
+&lt;h3 id=&#34;connecting&#34;&gt;Connecting&lt;/h3&gt;
+&lt;p&gt;Connect to eduroam.&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;$ iwctl
+[iwd]# station device connect eduroam
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Check if you are connected.&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;[iwd]# station device show
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;The value of &lt;em&gt;State&lt;/em&gt;, just as before, should be &lt;em&gt;connected&lt;/em&gt;. See if &lt;em&gt;Connected Network&lt;/em&gt; is displaying the network&amp;rsquo;s name. If it is, then you&amp;rsquo;re done.&lt;/p&gt;</description>
+    </item>
+    
+    
+    
+    
+  </channel>
+</rss>
